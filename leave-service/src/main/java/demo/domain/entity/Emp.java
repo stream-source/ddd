@@ -1,5 +1,7 @@
 package demo.domain.entity;
 
+import demo.domain.valueobject.EmpStatus;
+import demo.domain.valueobject.Period;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -61,30 +63,32 @@ public class Emp extends AggregateRoot {
      * 实体的行为方法，不一定要使用setXXX()
      */
     //转正
-    void becomeRegular() {
+    public Emp becomeRegular() {
         // 调用业务规则: 试用期的员工才能被转正
-        onlyProbationCanBecomeRegular();
-        empStatus = EmpStatus.REGULAR;
+//        onlyProbationCanBecomeRegular();
+        //调用值对象的业务规则
+        empStatus = empStatus.becomeRegular();
+        return this;
     }
 
 
-    public void terminate() {
+    public Emp terminate() {
         // 调用业务规则: 已经终止的员工不能再次终止
-        shouldNotTerminateAgain();
-        empStatus = EmpStatus.TERMINATE;
+        empStatus = empStatus.terminate();
+        return this;
     }
 
-    private void onlyProbationCanBecomeRegular() {
-        if (empStatus != EmpStatus.PROBATION) {
-            throw new RuntimeException("试用期员工才能转正！");
-        }
-    }
-
-    private void shouldNotTerminateAgain() {
-        if (empStatus == EmpStatus.TERMINATE) {
-            throw new RuntimeException("员工已经终止了");
-        }
-    }
+//    private void onlyProbationCanBecomeRegular() {
+//        if (empStatus != EmpStatus.PROBATION) {
+//            throw new RuntimeException("试用期员工才能转正！");
+//        }
+//    }
+//
+//    private void shouldNotTerminateAgain() {
+//        if (empStatus == EmpStatus.TERMINATED) {
+//            throw new RuntimeException("员工已经终止了");
+//        }
+//    }
 
     private void skillTypeShouldNotDuplicated(Long newSkillTypeId) {
         if (skills.stream().anyMatch(
@@ -133,15 +137,13 @@ public class Emp extends AggregateRoot {
 
     /**
      * 行为方法：添加工作经验
-     * @param startDate
-     * @param endDate
      * @param company
      * @param userId
      */
-    public void addExperience(LocalDate startDate, LocalDate endDate, String company, Long userId){
+    public void addExperience(Period period, String company, Long userId){
         // 调用业务规则: 工作经验的时间段不能重叠
-        durationShouldNotOverlap(startDate, endDate);
-        WorkExperience newExperience = new WorkExperience(tenantId, startDate, endDate, userId, LocalDateTime.now());
+        durationShouldNotOverlap(period);
+        WorkExperience newExperience = new WorkExperience(tenantId, period, userId, LocalDateTime.now());
         newExperience.setCompany(company);
         experiences.add(newExperience);
     }
@@ -149,18 +151,11 @@ public class Emp extends AggregateRoot {
 
     /**
      * 不变规则：校验工作经验；如果聚合根没有足够的数据，需要从数据库中获取，则需要将不变规则移入领域服务中；
-     * @param startDate
-     * @param endDate
      */
-    private void durationShouldNotOverlap(LocalDate startDate, LocalDate endDate) {
-        if (experiences.stream().anyMatch(e -> overlap(e, startDate, endDate))) {
+    private void durationShouldNotOverlap(Period period) {
+        if (experiences.stream().anyMatch(e -> e.getPeriod().overlap(period))) {
             throw new RuntimeException("工作经验的时间段不能重叠!");
         }
-    }
-    private boolean overlap(WorkExperience experience, LocalDate otherStart, LocalDate otherEnd) {
-        LocalDate thisStart = experience.getStartDate();
-        LocalDate thisEnd = experience.getEndDate();
-        return otherStart.isBefore(thisEnd) && otherEnd.isAfter(thisStart);
     }
 
 

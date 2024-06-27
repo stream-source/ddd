@@ -1,5 +1,6 @@
 package demo.domain.entity;
 
+import demo.domain.valueobject.Period;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -13,15 +14,14 @@ public class WorkExperience extends AuditTableEntity {
     private Long id;
     private Long tenantId;
     private String company;
-    private LocalDate startDate;
-    private LocalDate endDate;
 
-    WorkExperience(Long tenantId,LocalDate startDate, LocalDate endDate, Long createdBy, LocalDateTime createdAt) {
+    private Period period;
+
+    WorkExperience(Long tenantId, Period period, Long createdBy, LocalDateTime createdAt) {
         super(createdBy, createdAt);
         this.tenantId = tenantId;
         this.company = company;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.period = period;
     }
 
     void setCompany(String company) {

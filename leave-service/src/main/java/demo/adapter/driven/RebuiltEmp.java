@@ -1,6 +1,7 @@
 package demo.adapter.driven;
 
 import demo.domain.entity.*;
+import demo.domain.valueobject.EmpStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
